@@ -6,7 +6,7 @@ using System;
 
 public class MouseManager : MonoBehaviour
 {
-    public static MouseManager Instance;
+    public static MouseManager instance;
 
     public Texture2D cursor_point;
     public Texture2D cursor_doorway;
@@ -16,14 +16,15 @@ public class MouseManager : MonoBehaviour
 
 
     public event Action<Vector3> OnMouseClicked;
+    public event Action<GameObject> OnEnemyClicked;
 
-    private RaycastHit hitInfo;
+    private RaycastHit _hitInfo;
 
     void Awake() {
-        if (Instance != null) {
+        if (instance != null) {
             Destroy(gameObject);
         }
-        Instance = this;
+        instance = this;
     }
 
     void Update() {
@@ -34,11 +35,14 @@ public class MouseManager : MonoBehaviour
     void SetCursorTexture() {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        if (Physics.Raycast(ray, out hitInfo)) {
+        if (Physics.Raycast(ray, out _hitInfo)) {
             // update cursor texture
-            switch(hitInfo.collider.gameObject.tag) {
+            switch(_hitInfo.collider.gameObject.tag) {
                 case "Ground":
                     Cursor.SetCursor(cursor_target, new Vector2(16, 16), CursorMode.Auto);
+                    break;
+                case "Enemy":
+                    Cursor.SetCursor(cursor_attack, new Vector2(16, 16), CursorMode.Auto);
                     break;
 
 
@@ -47,10 +51,13 @@ public class MouseManager : MonoBehaviour
     }
 
     void MouseControl() {
-        if (Input.GetMouseButtonDown(0) && hitInfo.collider != null) {
+        if (Input.GetMouseButtonDown(0) && _hitInfo.collider != null) {
             // left button
-            if (hitInfo.collider.gameObject.CompareTag("Ground")) {
-                OnMouseClicked?.Invoke(hitInfo.point);
+            if (_hitInfo.collider.gameObject.CompareTag("Ground")) {
+                OnMouseClicked?.Invoke(_hitInfo.point);
+            }
+            if (_hitInfo.collider.gameObject.CompareTag("Enemy")) {
+                OnEnemyClicked?.Invoke(_hitInfo.collider.gameObject);
             }
         }
     }
